@@ -1,26 +1,32 @@
 package com.biuea.feature_flag.domain.entity
 
+import java.time.ZonedDateTime
+
 class FeatureFlag(
-    private val _id: Long,
-    private val _feature: Feature,
-    private var _status: FeatureFlagStatus
+    private val id: Long,
+    private val feature: Feature,
+    private var status: FeatureFlagStatus,
+    private var updatedAt: ZonedDateTime,
+    private val createdAt: ZonedDateTime,
 ) {
     fun checkActivation() {
-        if (this._status != FeatureFlagStatus.ACTIVE) {
+        if (this.status != FeatureFlagStatus.ACTIVE) {
             throw IllegalStateException("cannot available feature")
         }
     }
 
     fun isActive(): Boolean {
-        return this._status == FeatureFlagStatus.ACTIVE
+        return this.status == FeatureFlagStatus.ACTIVE
     }
 
     fun activate() {
-        this._status = FeatureFlagStatus.ACTIVE
+        this.status = FeatureFlagStatus.ACTIVE
+        this.updatedAt = ZonedDateTime.now()
     }
 
     fun inactivate() {
-        this._status = FeatureFlagStatus.INACTIVE
+        this.status = FeatureFlagStatus.INACTIVE
+        this.updatedAt = ZonedDateTime.now()
     }
 
     companion object {
@@ -29,9 +35,11 @@ class FeatureFlag(
             status: FeatureFlagStatus
         ): FeatureFlag {
             return FeatureFlag(
-                _id = 0,
-                _feature = feature,
-                _status = status
+                id = 0,
+                feature = feature,
+                status = status,
+                createdAt = ZonedDateTime.now(),
+                updatedAt =ZonedDateTime.now(),
             )
         }
     }

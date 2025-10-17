@@ -6,5 +6,6 @@ import com.biuea.feature_flag.domain.entity.FeatureFlagGroup
 interface FeatureFlagGroupRepository {
     fun save(entity: FeatureFlagGroup): FeatureFlagGroup
     fun getOrNullBy(name: String): FeatureFlagGroup?
-    fun getAllBy(feature: Feature): List<FeatureFlagGroup>
+    fun getOrNullBy(feature: Feature): FeatureFlagGroup?
+    fun getAll(): List<FeatureFlagGroup>
 }

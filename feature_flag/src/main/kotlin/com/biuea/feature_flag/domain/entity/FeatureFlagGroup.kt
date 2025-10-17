@@ -1,58 +1,92 @@
 package com.biuea.feature_flag.domain.entity
 
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
+import java.time.ZonedDateTime
 
 class FeatureFlagGroup(
-    private val _id: Long,
-    private val _name: String,
-    private val _featureFlag: FeatureFlag,
-    private var _workspaceIds: List<Int>,
+    private val id: Long,
+    val featureFlag: FeatureFlag,
+    private var specifics: List<Int>,
+    private var percentage: Int?,
+    private var absolute: Int?,
+    private var updatedAt: ZonedDateTime,
+    private val createdAt: ZonedDateTime,
 ) {
-    private lateinit var _algorithm: FeatureFlagGroupAlgorithm
+    private lateinit var algorithm: FeatureFlagAlgorithm
 
-    fun decideGroup() {
+    fun containsWorkspace(workspaceId: Int): Boolean {
         this.checkAlgorithmInitialized()
-        this._workspaceIds = this._algorithm.decideGroup()
+        return this.algorithm.isEnable(workspaceId)
     }
 
-    fun changeAlgorithm(algorithm: FeatureFlagGroupAlgorithm) {
-        this._algorithm = algorithm
+    fun changeAlgorithm(algorithm: FeatureFlagAlgorithm) {
+        this.algorithm = algorithm
+        this.updatedAt = ZonedDateTime.now()
     }
 
     fun checkActivation() {
-        this._featureFlag.checkActivation()
+        this.featureFlag.checkActivation()
     }
 
     fun isAvailable(): Boolean {
-        return this._featureFlag.isActive()
-    }
-
-    fun isAppliedTargetTo(workspaceId: Int): Boolean {
-        return this._workspaceIds.contains(workspaceId)
+        return this.featureFlag.isActive()
     }
 
     private fun checkAlgorithmInitialized() {
-        if (!this::_algorithm.isInitialized) {
+        if (!this::algorithm.isInitialized) {
             throw IllegalStateException("Algorithm is not initialized")
         }
     }
 
     companion object {
         fun create(
-            name: String,
             featureFlag: FeatureFlag,
-            algorithm: FeatureFlagGroupAlgorithm
+            algorithmOption: FeatureFlagAlgorithmOption,
+            specifics: List<Int>,
+            absolute: Int?,
+            percentage: Int?,
         ): FeatureFlagGroup {
+            when (algorithmOption) {
+                FeatureFlagAlgorithmOption.SPECIFIC -> {
+                    if (specifics.isEmpty() || specifics.size > MAX_SPECIFIC_SIZE) {
+                        throw IllegalArgumentException("workspaceIds is required for SPECIFIC option")
+                    }
+                }
+                FeatureFlagAlgorithmOption.PERCENT -> {
+                    if (percentage == null) {
+                        throw IllegalArgumentException("workspaceCount and percentage are required for PERCENT option")
+                    }
+                }
+                FeatureFlagAlgorithmOption.ABSOLUTE -> {
+                    if (absolute == null) {
+                        throw IllegalArgumentException("absoluteCount is required for ABSOLUTE option")
+                    }
+                }
+            }
+
+            val algorithm = FeatureFlagAlgorithmDecider.decide(
+                algorithm = algorithmOption,
+                specifics = specifics,
+                percentage = percentage,
+                absolute = absolute,
+            )
+
             return FeatureFlagGroup(
-                _id = 0L,
-                _name = name,
-                _featureFlag = featureFlag,
-                _workspaceIds = emptyList()
+                id = 0L,
+                featureFlag = featureFlag,
+                specifics = specifics,
+                absolute = absolute,
+                percentage = percentage,
+                createdAt = ZonedDateTime.now(),
+                updatedAt = ZonedDateTime.now(),
             ).apply {
                 this.changeAlgorithm(algorithm)
-                this.decideGroup()
             }
         }
+
+        const val MAX_SPECIFIC_SIZE: Int = 10000
     }
+}
+
+fun Collection<FeatureFlagGroup>.associatedByFeatureFlag(): Map<FeatureFlag, FeatureFlagGroup> {
+    return this.associateBy { it.featureFlag }
 }
