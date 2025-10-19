@@ -5,5 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface FeatureFlagGroupJpaRepository: JpaRepository<FeatureFlagGroupEntity, Long> {
     fun findByFeatureFlagId(featureFlagId: Long): FeatureFlagGroupEntity?
-    fun findByNameIs(name: String): FeatureFlagGroupEntity?
 }

@@ -8,4 +8,5 @@ interface FeatureFlagGroupRepository {
     fun getFeatureFlagGroupOrNullBy(id: Long): FeatureFlagGroup?
     fun getFeatureFlagGroupOrNullBy(feature: Feature): FeatureFlagGroup?
     fun getFeatureFlagGroups(): List<FeatureFlagGroup>
+    fun delete(entity: FeatureFlagGroup)
 }

@@ -1,10 +1,10 @@
 package com.biuea.feature_flag.infrastructure.feature.jpa
 
 import com.biuea.feature_flag.domain.feature.entity.AbsoluteAlgorithm
-import com.biuea.feature_flag.domain.feature.entity.FeatureFlag
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagAlgorithmDecider
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagAlgorithmOption
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagGroup
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagStatus
 import com.biuea.feature_flag.domain.feature.entity.PercentAlgorithm
 import com.biuea.feature_flag.domain.feature.entity.SpecificAlgorithm
 import jakarta.persistence.AttributeConverter
@@ -18,7 +18,6 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.repository.findByIdOrNull
 import java.time.ZonedDateTime
 
 @Table(name = "feature_flag_group")
@@ -26,6 +25,9 @@ import java.time.ZonedDateTime
 class FeatureFlagGroupEntity(
     @Column(name = "feature_flag_id")
     val featureFlagId: Long,
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    val status: FeatureFlagStatus,
     @Convert(converter = SpecificsConverter::class)
     @Column(name = "specifics")
     val specifics: List<Int>,
@@ -63,7 +65,8 @@ private class SpecificsConverter : AttributeConverter<List<Int>, String?> {
 internal fun FeatureFlagGroupEntity.toDomain(featureFlag: FeatureFlagEntity): FeatureFlagGroup {
     return FeatureFlagGroup(
         _id = this.id,
-        _featureFlag = featureFlag,
+        _status = this.status,
+        _featureFlag = featureFlag.toDomain(),
         _specifics = this.specifics,
         _absolute = this.absolute,
         _percentage = this.percentage,
@@ -82,6 +85,7 @@ internal fun FeatureFlagGroupEntity.toDomain(featureFlag: FeatureFlagEntity): Fe
 
 internal fun FeatureFlagGroup.toEntity(): FeatureFlagGroupEntity {
     return FeatureFlagGroupEntity(
+        status = this.status,
         featureFlagId = this.featureFlag.id,
         specifics = this.specifics,
         percentage = this.percentage,

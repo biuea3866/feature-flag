@@ -14,20 +14,24 @@ import org.springframework.stereotype.Component
 
 @Component
 class FeatureFlagAdaptor(
-    private val featureFlagJpRepository: FeatureFlagJpaRepository,
+    private val featureFlagJpaRepository: FeatureFlagJpaRepository,
     private val featureFlagGroupJpaRepository: FeatureFlagGroupJpaRepository
 ): FeatureFlagRepository, FeatureFlagGroupRepository {
     override fun save(entity: FeatureFlag): FeatureFlag {
-        return featureFlagJpRepository.save(entity.toEntity()).toDomain()
+        return featureFlagJpaRepository.save(entity.toEntity()).toDomain()
     }
 
     override fun getFeatureFlags(): List<FeatureFlag> {
-        return featureFlagJpRepository.findAll().map { it.toDomain() }
+        return featureFlagJpaRepository.findAll().map { it.toDomain() }
     }
 
     override fun getFeatureFlagBy(feature: Feature): FeatureFlag {
-        return featureFlagJpRepository.findByFeatureIs(feature)?.toDomain()
+        return featureFlagJpaRepository.findByFeatureIs(feature)?.toDomain()
             ?: throw NoSuchElementException("FeatureFlag not found for feature: $feature")
+    }
+
+    override fun getFeatureFlagOrNullBy(feature: Feature): FeatureFlag? {
+        return featureFlagJpaRepository.findByFeatureIs(feature)?.toDomain()
     }
 
     override fun save(entity: FeatureFlagGroup): FeatureFlagGroup {
@@ -37,22 +41,26 @@ class FeatureFlagAdaptor(
 
     override fun getFeatureFlagGroupOrNullBy(id: Long): FeatureFlagGroup? {
         val featureFlagGroupEntity = featureFlagGroupJpaRepository.findByIdOrNull(id) ?: return null
-        val featureFlagEntity = featureFlagJpRepository.findByIdOrNull(featureFlagGroupEntity.featureFlagId)
+        val featureFlagEntity = featureFlagJpaRepository.findByIdOrNull(featureFlagGroupEntity.featureFlagId)
             ?: return null
         return featureFlagGroupEntity.toDomain(featureFlagEntity)
     }
 
     override fun getFeatureFlagGroupOrNullBy(feature: Feature): FeatureFlagGroup? {
-        val featureFlag = featureFlagJpRepository.findByFeatureIs(feature) ?: return null
+        val featureFlag = featureFlagJpaRepository.findByFeatureIs(feature) ?: return null
         return featureFlagGroupJpaRepository.findByFeatureFlagId(featureFlag.id)
             ?.toDomain(featureFlag)
     }
 
     override fun getFeatureFlagGroups(): List<FeatureFlagGroup> {
-        val featureFlags = featureFlagJpRepository.findAll().associateBy { it.id }
+        val featureFlags = featureFlagJpaRepository.findAll().associateBy { it.id }
         return featureFlagGroupJpaRepository.findAll().mapNotNull { entity ->
             val featureFlag = featureFlags[entity.featureFlagId] ?: return@mapNotNull null
             entity.toDomain(featureFlag)
         }
+    }
+
+    override fun delete(entity: FeatureFlagGroup) {
+        featureFlagGroupJpaRepository.delete(entity.toEntity())
     }
 }

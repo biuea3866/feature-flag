@@ -3,7 +3,7 @@ package com.biuea.feature_flag.domain.feature.entity
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagGroup.Companion.MAX_SPECIFIC_SIZE
 
 interface FeatureFlagAlgorithm {
-    fun isEnable(workspaceId: Int): Boolean
+    fun isEnabled(workspaceId: Int): Boolean
 }
 
 object FeatureFlagAlgorithmDecider {
@@ -42,7 +42,7 @@ object FeatureFlagAlgorithmDecider {
 class SpecificAlgorithm(
     val specifics: List<Int>
 ): FeatureFlagAlgorithm {
-    override fun isEnable(workspaceId: Int): Boolean {
+    override fun isEnabled(workspaceId: Int): Boolean {
         if (MAX_SPECIFIC_SIZE < this.specifics.size) {
             throw IllegalArgumentException("specifics size exceeds the maximum limit of $MAX_SPECIFIC_SIZE")
         }
@@ -54,15 +54,15 @@ class SpecificAlgorithm(
 class PercentAlgorithm(
     val percentage: Int
 ) : FeatureFlagAlgorithm {
-    override fun isEnable(workspaceId: Int): Boolean {
-        return workspaceId % 100 <= this.percentage
+    override fun isEnabled(workspaceId: Int): Boolean {
+        return (workspaceId.hashCode() and 0x7FFFFFFF) % 100 < this.percentage
     }
 }
 
 class AbsoluteAlgorithm(
     val absolute: Int
 ) : FeatureFlagAlgorithm {
-    override fun isEnable(workspaceId: Int): Boolean {
+    override fun isEnabled(workspaceId: Int): Boolean {
         return workspaceId <= this.absolute
     }
 }

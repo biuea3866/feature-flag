@@ -8,6 +8,7 @@ class FeatureFlagGroup(
     private var _specifics: List<Int>,
     private var _percentage: Int?,
     private var _absolute: Int?,
+    private var _status: FeatureFlagStatus,
     private var _updatedAt: ZonedDateTime,
     private val _createdAt: ZonedDateTime,
 ) {
@@ -16,6 +17,7 @@ class FeatureFlagGroup(
     val specifics get() = this._specifics
     val percentage get() = this._percentage
     val absolute get() = this._absolute
+    val status get() = this._status
     val updatedAt get() = this._updatedAt
     val createdAt get() = this._createdAt
 
@@ -24,7 +26,7 @@ class FeatureFlagGroup(
 
     fun containsWorkspace(workspaceId: Int): Boolean {
         this.checkAlgorithmInitialized()
-        return this._algorithm.isEnable(workspaceId)
+        return this._algorithm.isEnabled(workspaceId)
     }
 
     fun changeAlgorithm(
@@ -52,11 +54,27 @@ class FeatureFlagGroup(
     }
 
     fun checkActivation() {
-        this._featureFlag.checkActivation()
+        if (this.isActivation()) {
+            throw IllegalStateException("FeatureFlagGroup is inactive")
+        }
     }
 
-    fun isAvailable(): Boolean {
-        return this._featureFlag.isActive()
+    fun isActivation(): Boolean {
+        return this._status == FeatureFlagStatus.ACTIVE
+    }
+
+    fun isEnabled(workspaceId: Int): Boolean {
+        return this.isActivation() && this.containsWorkspace(workspaceId)
+    }
+
+    fun activate() {
+        this._status = FeatureFlagStatus.ACTIVE
+        this._updatedAt = ZonedDateTime.now()
+    }
+
+    fun inactivate() {
+        this._status = FeatureFlagStatus.INACTIVE
+        this._updatedAt = ZonedDateTime.now()
     }
 
     private fun checkAlgorithmInitialized() {
@@ -68,6 +86,7 @@ class FeatureFlagGroup(
     companion object {
         fun create(
             featureFlag: FeatureFlag,
+            status: FeatureFlagStatus,
             algorithmOption: FeatureFlagAlgorithmOption,
             specifics: List<Int>,
             absolute: Int?,
@@ -101,6 +120,7 @@ class FeatureFlagGroup(
             return FeatureFlagGroup(
                 _id = 0L,
                 _featureFlag = featureFlag,
+                _status = status,
                 _specifics = specifics,
                 _absolute = absolute,
                 _percentage = percentage,
@@ -115,6 +135,15 @@ class FeatureFlagGroup(
     }
 }
 
+enum class FeatureFlagStatus {
+    ACTIVE,
+    INACTIVE,
+}
+
 fun Collection<FeatureFlagGroup>.associatedByFeatureFlag(): Map<FeatureFlag, FeatureFlagGroup> {
     return this.associateBy { it.featureFlag }
+}
+
+fun Collection<FeatureFlagGroup>.isEnabled(feature: Feature): Boolean {
+    return this.any { it.featureFlag.isMatchFeature(feature) && it.isActivation() }
 }

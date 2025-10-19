@@ -2,7 +2,6 @@ package com.biuea.feature_flag.infrastructure.feature.jpa
 
 import com.biuea.feature_flag.domain.feature.entity.Feature
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlag
-import com.biuea.feature_flag.domain.feature.entity.FeatureFlagStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -19,9 +18,6 @@ class FeatureFlagEntity(
     @Column(name = "feature")
     @Enumerated(EnumType.STRING)
     val feature: Feature,
-    @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    val status: FeatureFlagStatus,
     @Column(name = "created_at")
     val createdAt: ZonedDateTime,
     @Column(name = "updated_at")
@@ -36,7 +32,6 @@ internal fun FeatureFlagEntity.toDomain(): FeatureFlag {
     return FeatureFlag(
         _id = this.id,
         _feature = this.feature,
-        _status = this.status,
         _createdAt = this.createdAt,
         _updatedAt = this.updatedAt,
     )
@@ -45,7 +40,6 @@ internal fun FeatureFlagEntity.toDomain(): FeatureFlag {
 internal fun FeatureFlag.toEntity(): FeatureFlagEntity {
     return FeatureFlagEntity(
         feature = this.feature,
-        status = this.status,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
     )
