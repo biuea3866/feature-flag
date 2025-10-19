@@ -1,38 +1,66 @@
-package com.biuea.feature_flag.domain.entity
+package com.biuea.feature_flag.domain.feature.entity
 
 import java.time.ZonedDateTime
 
 class FeatureFlagGroup(
-    private val id: Long,
-    val featureFlag: FeatureFlag,
-    private var specifics: List<Int>,
-    private var percentage: Int?,
-    private var absolute: Int?,
-    private var updatedAt: ZonedDateTime,
-    private val createdAt: ZonedDateTime,
+    private val _id: Long,
+    private var _featureFlag: FeatureFlag,
+    private var _specifics: List<Int>,
+    private var _percentage: Int?,
+    private var _absolute: Int?,
+    private var _updatedAt: ZonedDateTime,
+    private val _createdAt: ZonedDateTime,
 ) {
-    private lateinit var algorithm: FeatureFlagAlgorithm
+    val id get() = this._id
+    val featureFlag get() = this._featureFlag
+    val specifics get() = this._specifics
+    val percentage get() = this._percentage
+    val absolute get() = this._absolute
+    val updatedAt get() = this._updatedAt
+    val createdAt get() = this._createdAt
+
+    private lateinit var _algorithm: FeatureFlagAlgorithm
+    val algorithm get() = this._algorithm
 
     fun containsWorkspace(workspaceId: Int): Boolean {
         this.checkAlgorithmInitialized()
-        return this.algorithm.isEnable(workspaceId)
+        return this._algorithm.isEnable(workspaceId)
     }
 
-    fun changeAlgorithm(algorithm: FeatureFlagAlgorithm) {
-        this.algorithm = algorithm
-        this.updatedAt = ZonedDateTime.now()
+    fun changeAlgorithm(
+        algorithmOption: FeatureFlagAlgorithmOption,
+        specifics: List<Int>,
+        absolute: Int?,
+        percentage: Int?,
+    ) {
+        val algorithm = FeatureFlagAlgorithmDecider.decide(
+            algorithm = algorithmOption,
+            specifics = specifics,
+            percentage = percentage,
+            absolute = absolute,
+        )
+
+        this._specifics = specifics
+        this._absolute = absolute
+        this._percentage = percentage
+        this._updatedAt = ZonedDateTime.now()
+        this.applyAlgorithm(algorithm)
+    }
+
+    fun applyAlgorithm(algorithm: FeatureFlagAlgorithm) {
+        this._algorithm = algorithm
     }
 
     fun checkActivation() {
-        this.featureFlag.checkActivation()
+        this._featureFlag.checkActivation()
     }
 
     fun isAvailable(): Boolean {
-        return this.featureFlag.isActive()
+        return this._featureFlag.isActive()
     }
 
     private fun checkAlgorithmInitialized() {
-        if (!this::algorithm.isInitialized) {
+        if (!this::_algorithm.isInitialized) {
             throw IllegalStateException("Algorithm is not initialized")
         }
     }
@@ -71,15 +99,15 @@ class FeatureFlagGroup(
             )
 
             return FeatureFlagGroup(
-                id = 0L,
-                featureFlag = featureFlag,
-                specifics = specifics,
-                absolute = absolute,
-                percentage = percentage,
-                createdAt = ZonedDateTime.now(),
-                updatedAt = ZonedDateTime.now(),
+                _id = 0L,
+                _featureFlag = featureFlag,
+                _specifics = specifics,
+                _absolute = absolute,
+                _percentage = percentage,
+                _createdAt = ZonedDateTime.now(),
+                _updatedAt = ZonedDateTime.now(),
             ).apply {
-                this.changeAlgorithm(algorithm)
+                this.applyAlgorithm(algorithm)
             }
         }
 

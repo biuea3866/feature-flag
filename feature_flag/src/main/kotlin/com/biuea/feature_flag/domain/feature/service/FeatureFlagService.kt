@@ -1,14 +1,14 @@
-package com.biuea.feature_flag.domain.service
+package com.biuea.feature_flag.domain.feature.service
 
-import com.biuea.feature_flag.domain.entity.Feature
-import com.biuea.feature_flag.domain.entity.FeatureFlag
-import com.biuea.feature_flag.domain.entity.FeatureFlagAlgorithmDecider
-import com.biuea.feature_flag.domain.entity.FeatureFlagAlgorithmOption
-import com.biuea.feature_flag.domain.entity.FeatureFlagGroup
-import com.biuea.feature_flag.domain.entity.FeatureFlagStatus
-import com.biuea.feature_flag.domain.entity.associatedByFeatureFlag
-import com.biuea.feature_flag.domain.repository.FeatureFlagGroupRepository
-import com.biuea.feature_flag.domain.repository.FeatureFlagRepository
+import com.biuea.feature_flag.domain.feature.entity.Feature
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlag
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagAlgorithmDecider
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagAlgorithmOption
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagGroup
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagStatus
+import com.biuea.feature_flag.domain.feature.entity.associatedByFeatureFlag
+import com.biuea.feature_flag.domain.feature.repository.FeatureFlagGroupRepository
+import com.biuea.feature_flag.domain.feature.repository.FeatureFlagRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,7 +30,7 @@ class FeatureFlagService(
         feature: Feature,
         activate: Boolean
     ) {
-        val featureFlag = featureFlagRepository.getBy(feature)
+        val featureFlag = featureFlagRepository.getFeatureFlagBy(feature)
         when (activate) {
             true -> featureFlag.activate()
             false -> featureFlag.inactivate()
@@ -40,19 +40,19 @@ class FeatureFlagService(
 
     @Transactional(readOnly = true)
     fun fetchFeatureFlagGroupMap(): Map<FeatureFlag, FeatureFlagGroup> {
-        return featureFlagGroupRepository.getAll().associatedByFeatureFlag()
+        return featureFlagGroupRepository.getFeatureFlagGroups().associatedByFeatureFlag()
     }
 
     @Transactional(readOnly = true)
     fun fetchFeatureFlags(workspaceId: Int): List<FeatureFlag> {
-        return featureFlagGroupRepository.getAll()
+        return featureFlagGroupRepository.getFeatureFlagGroups()
             .filter { it.containsWorkspace(workspaceId) }
-            .map { it }
+            .map { it.featureFlag }
     }
 
     @Transactional(readOnly = true)
     fun fetchAvailableFeatureFlagGroup(feature: Feature): FeatureFlagGroup {
-        return featureFlagGroupRepository.getOrNullBy(feature)
+        return featureFlagGroupRepository.getFeatureFlagGroupOrNullBy(feature)
             ?.takeIf { it.isAvailable() }
             ?: throw IllegalStateException("FeatureFlagGroup for feature $feature does not exist")
     }
@@ -65,31 +65,29 @@ class FeatureFlagService(
         percentage: Int?,
         absolute: Int?,
     ) {
-        val featureFlag = featureFlagRepository.getBy(feature)
-        val featureFlagGroup = featureFlagGroupRepository.getOrNullBy(feature)
+        val featureFlag = featureFlagRepository.getFeatureFlagBy(feature)
+        val featureFlagGroup = featureFlagGroupRepository.getFeatureFlagGroupOrNullBy(feature)
 
         featureFlagGroupRepository.save(FeatureFlagGroup.create(featureFlag, algorithm, specifics, absolute, percentage))
     }
 
     @Transactional
     fun changeFeatureFlagGroupAlgorithm(
-        name: String,
+        featureFlagGroupId: Long,
         algorithm: FeatureFlagAlgorithmOption,
-        specifics: List<Int>?,
+        specifics: List<Int>,
         percentage: Int?,
         absolute: Int?,
     ) {
-        val featureFlagGroup = featureFlagGroupRepository.getOrNullBy(name)
-            ?: throw IllegalStateException("FeatureFlagGroup with name $name does not exist")
+        val featureFlagGroup = featureFlagGroupRepository.getFeatureFlagGroupOrNullBy(featureFlagGroupId)
+            ?: throw NoSuchElementException("FeatureFlagGroup not found for id: $featureFlagGroupId")
 
-        val algorithm = FeatureFlagAlgorithmDecider.decide(
-            algorithm = algorithm,
+        featureFlagGroup.changeAlgorithm(
+            algorithmOption = algorithm,
             specifics = specifics,
             percentage = percentage,
             absolute = absolute
         )
-
-        featureFlagGroup.changeAlgorithm(algorithm)
 
         featureFlagGroupRepository.save(featureFlagGroup)
     }

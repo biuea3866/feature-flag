@@ -1,6 +1,6 @@
-package com.biuea.feature_flag.domain.entity
+package com.biuea.feature_flag.domain.feature.entity
 
-import com.biuea.feature_flag.domain.entity.FeatureFlagGroup.Companion.MAX_SPECIFIC_SIZE
+import com.biuea.feature_flag.domain.feature.entity.FeatureFlagGroup.Companion.MAX_SPECIFIC_SIZE
 
 interface FeatureFlagAlgorithm {
     fun isEnable(workspaceId: Int): Boolean
@@ -26,14 +26,14 @@ object FeatureFlagAlgorithmDecider {
                     throw IllegalArgumentException("percentage is required for PERCENT option")
                 }
 
-                RandomPercentAlgorithm(percentage)
+                PercentAlgorithm(percentage)
             }
             FeatureFlagAlgorithmOption.ABSOLUTE -> {
                 if (absolute == null) {
                     throw IllegalArgumentException("absolute is required for ABSOLUTE option")
                 }
 
-                RandomAbsoluteAlgorithm(absolute)
+                AbsoluteAlgorithm(absolute)
             }
         }
     }
@@ -51,7 +51,7 @@ class SpecificAlgorithm(
     }
 }
 
-class RandomPercentAlgorithm(
+class PercentAlgorithm(
     val percentage: Int
 ) : FeatureFlagAlgorithm {
     override fun isEnable(workspaceId: Int): Boolean {
@@ -59,7 +59,7 @@ class RandomPercentAlgorithm(
     }
 }
 
-class RandomAbsoluteAlgorithm(
+class AbsoluteAlgorithm(
     val absolute: Int
 ) : FeatureFlagAlgorithm {
     override fun isEnable(workspaceId: Int): Boolean {

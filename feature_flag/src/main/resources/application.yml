@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: FeatureFlagApplication
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/feature_flag?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Seoul
+
+#  kafka:
+#    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+
+server:
+  port: 8080
