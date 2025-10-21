@@ -123,11 +123,3 @@ enum class FeatureFlagStatus {
     ACTIVE,
     INACTIVE,
 }
-
-fun Collection<FeatureFlagGroup>.associatedByFeatureFlag(): Map<FeatureFlag, FeatureFlagGroup> {
-    return this.associateBy { it.featureFlag }
-}
-
-fun Collection<FeatureFlagGroup>.isEnabled(feature: Feature): Boolean {
-    return this.any { it.featureFlag.isMatchFeature(feature) && it.isActivation() }
-}

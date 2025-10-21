@@ -2,7 +2,6 @@ package com.biuea.feature_flag.application.applicant
 
 import com.biuea.feature_flag.domain.applicant.ApplicantService
 import com.biuea.feature_flag.domain.feature.entity.Feature
-import com.biuea.feature_flag.domain.feature.entity.isEnabled
 import com.biuea.feature_flag.domain.feature.service.FeatureFlagService
 import org.springframework.stereotype.Component
 
