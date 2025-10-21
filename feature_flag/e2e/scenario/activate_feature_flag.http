@@ -1,0 +1,42 @@
+### AI_SCREENING 피쳐 등록
+POST http://localhost:8080/feature/register
+Content-Type: application/json
+
+{
+    "feature": "AI_SCREENING"
+}
+
+### APPLICANT_EVALUATOR 피쳐 등록
+POST http://localhost:8080/feature/register
+Content-Type: application/json
+
+{
+    "feature": "APPLICANT_EVALUATOR"
+}
+
+### AI_SCREENING 피쳐 그룹 적용 (30%)
+
+POST http://localhost:8080/feature/group/register
+Content-Type: application/json
+
+{
+    "status": "ACTIVE",
+    "feature": "AI_SCREENING",
+    "algorithm": "PERCENT",
+    "specifics": null,
+    "percentage": 30,
+    "absolute": null
+}
+
+### APPLICANT_EVALUTOR 피쳐 그룹 적용 (3000번 웤스까지)
+POST http://localhost:8080/feature/group/register
+Content-Type: application/json
+
+{
+    "status": "ACTIVE",
+    "feature": "APPLICANT_EVALUATOR",
+    "algorithm": "ABSOLUTE",
+    "specifics": null,
+    "percentage": null,
+    "absolute": 3000
+}

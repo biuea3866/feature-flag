@@ -1,0 +1,7 @@
+### 적용 대상
+GET http://localhost:8080/applicants/business
+X-Workspace-Id: 10
+
+### 미적용 대상
+GET http://localhost:8080/applicants/business
+X-Workspace-Id: 2555

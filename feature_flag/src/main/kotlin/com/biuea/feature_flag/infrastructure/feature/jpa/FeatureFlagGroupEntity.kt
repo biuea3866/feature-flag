@@ -68,16 +68,16 @@ internal fun FeatureFlagGroupEntity.toDomain(featureFlag: FeatureFlagEntity): Fe
         _status = this.status,
         _featureFlag = featureFlag.toDomain(),
         _specifics = this.specifics,
-        _absolute = this.absolute,
         _percentage = this.percentage,
+        _absolute = this.absolute,
         _createdAt = this.createdAt,
         _updatedAt = this.updatedAt,
     ).apply {
         val algorithm = FeatureFlagAlgorithmDecider.decide(
-            algorithm = this@toDomain.algorithmOption,
-            specifics = specifics,
-            percentage = percentage,
-            absolute = absolute
+            algorithmOption = this@toDomain.algorithmOption,
+            specifics = this@toDomain.specifics,
+            percentage = this@toDomain.percentage,
+            absolute = this@toDomain.absolute
         )
         applyAlgorithm(algorithm)
     }

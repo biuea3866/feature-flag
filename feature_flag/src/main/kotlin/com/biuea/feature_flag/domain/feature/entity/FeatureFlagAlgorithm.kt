@@ -8,12 +8,12 @@ interface FeatureFlagAlgorithm {
 
 object FeatureFlagAlgorithmDecider {
     fun decide(
-        algorithm: FeatureFlagAlgorithmOption,
+        algorithmOption: FeatureFlagAlgorithmOption,
         specifics: List<Int>?,
         percentage: Int?,
         absolute: Int?
     ): FeatureFlagAlgorithm {
-        return when (algorithm) {
+        return when (algorithmOption) {
             FeatureFlagAlgorithmOption.SPECIFIC -> {
                 if (specifics.isNullOrEmpty()) {
                     throw IllegalArgumentException("specifics is required for SPECIFIC option")
@@ -55,7 +55,7 @@ class PercentAlgorithm(
     val percentage: Int
 ) : FeatureFlagAlgorithm {
     override fun isEnabled(workspaceId: Int): Boolean {
-        return (workspaceId.hashCode() and 0x7FFFFFFF) % 100 < this.percentage
+        return (workspaceId % 100) < this.percentage
     }
 }
 

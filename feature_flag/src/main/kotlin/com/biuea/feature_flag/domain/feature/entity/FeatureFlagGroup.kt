@@ -5,19 +5,19 @@ import java.time.ZonedDateTime
 class FeatureFlagGroup(
     private val _id: Long,
     private var _featureFlag: FeatureFlag,
+    private var _status: FeatureFlagStatus,
     private var _specifics: List<Int>,
     private var _percentage: Int?,
     private var _absolute: Int?,
-    private var _status: FeatureFlagStatus,
     private var _updatedAt: ZonedDateTime,
     private val _createdAt: ZonedDateTime,
 ) {
     val id get() = this._id
     val featureFlag get() = this._featureFlag
+    val status get() = this._status
     val specifics get() = this._specifics
     val percentage get() = this._percentage
     val absolute get() = this._absolute
-    val status get() = this._status
     val updatedAt get() = this._updatedAt
     val createdAt get() = this._createdAt
 
@@ -27,26 +27,6 @@ class FeatureFlagGroup(
     fun containsWorkspace(workspaceId: Int): Boolean {
         this.checkAlgorithmInitialized()
         return this._algorithm.isEnabled(workspaceId)
-    }
-
-    fun changeAlgorithm(
-        algorithmOption: FeatureFlagAlgorithmOption,
-        specifics: List<Int>,
-        absolute: Int?,
-        percentage: Int?,
-    ) {
-        val algorithm = FeatureFlagAlgorithmDecider.decide(
-            algorithm = algorithmOption,
-            specifics = specifics,
-            percentage = percentage,
-            absolute = absolute,
-        )
-
-        this._specifics = specifics
-        this._absolute = absolute
-        this._percentage = percentage
-        this._updatedAt = ZonedDateTime.now()
-        this.applyAlgorithm(algorithm)
     }
 
     fun applyAlgorithm(algorithm: FeatureFlagAlgorithm) {
@@ -111,7 +91,7 @@ class FeatureFlagGroup(
             }
 
             val algorithm = FeatureFlagAlgorithmDecider.decide(
-                algorithm = algorithmOption,
+                algorithmOption = algorithmOption,
                 specifics = specifics,
                 percentage = percentage,
                 absolute = absolute,

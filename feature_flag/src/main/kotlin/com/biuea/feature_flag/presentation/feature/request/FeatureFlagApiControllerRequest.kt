@@ -4,10 +4,7 @@ import com.biuea.feature_flag.domain.feature.entity.Feature
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagAlgorithmOption
 import com.biuea.feature_flag.domain.feature.entity.FeatureFlagStatus
 
-data class RegisterFeatureFlagRequest(
-    val feature: Feature,
-    val status: FeatureFlagStatus
-)
+data class RegisterFeatureFlagRequest(val feature: Feature)
 
 data class ActivateFeatureFlagRequest(val status: FeatureFlagStatus)
 
