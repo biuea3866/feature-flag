@@ -16,8 +16,9 @@ class ApplicantFacade(
                 when {
                     it.isEnabled(Feature.AI_SCREENING) -> applicantService.aiScreeningFeature()
                     it.isEnabled(Feature.APPLICANT_EVALUATOR) -> applicantService.applicantEvaluatorFeature()
-                    else -> applicantService.commonBusiness()
+                    else -> return@forEach
                 }
             }
+        applicantService.commonBusiness()
     }
 }

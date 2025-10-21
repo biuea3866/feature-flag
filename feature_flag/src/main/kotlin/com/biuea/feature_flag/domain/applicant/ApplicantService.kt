@@ -8,13 +8,11 @@ class ApplicantService {
     @Transactional
     fun aiScreeningFeature() {
         println("AI feature executed")
-        commonBusiness()
     }
 
     @Transactional
     fun applicantEvaluatorFeature() {
         println("Applicant Evaluator feature executed")
-        commonBusiness()
     }
 
     @Transactional
