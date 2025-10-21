@@ -14,9 +14,9 @@ class ApplicantFacade(
     fun execute(workspaceId: Int) {
         featureFlagService.fetchFeatureFlagGroups(workspaceId)
             .forEach {
-                when(it.featureFlag.feature) {
-                    Feature.AI_SCREENING -> applicantService.aiScreeningFeature()
-                    Feature.APPLICANT_EVALUATOR -> applicantService.applicantEvaluatorFeature()
+                when {
+                    it.isEnabled(Feature.AI_SCREENING) -> applicantService.aiScreeningFeature()
+                    it.isEnabled(Feature.APPLICANT_EVALUATOR) -> applicantService.applicantEvaluatorFeature()
                     else -> applicantService.commonBusiness()
                 }
             }

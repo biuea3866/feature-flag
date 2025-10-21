@@ -34,7 +34,7 @@ class FeatureFlagGroup(
     }
 
     fun checkActivation() {
-        if (this.isActivation()) {
+        if (this.isActivation().not()) {
             throw IllegalStateException("FeatureFlagGroup is inactive")
         }
     }
@@ -45,6 +45,10 @@ class FeatureFlagGroup(
 
     fun isEnabled(workspaceId: Int): Boolean {
         return this.isActivation() && this.containsWorkspace(workspaceId)
+    }
+
+    fun isEnabled(feature: Feature): Boolean {
+        return this._featureFlag.isMatchFeature(feature)
     }
 
     fun activate() {
