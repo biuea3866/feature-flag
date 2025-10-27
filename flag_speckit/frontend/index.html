@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feature Flags</title>
+</head>
+<body>
+    <h1>Feature Flags</h1>
+    <div id="flags"></div>
+
+    <script>
+        async function getFlags() {
+            const response = await fetch('/flags');
+            const flags = await response.json();
+            const flagsDiv = document.getElementById('flags');
+            flagsDiv.innerHTML = '';
+            for (const flag of flags) {
+                const flagDiv = document.createElement('div');
+                flagDiv.innerHTML = `
+                    <h2>${flag.name}</h2>
+                    <p>${flag.description}</p>
+                    <p>Enabled: ${flag.enabled}</p>
+                    <button onclick="toggleFlag('${flag.name}', ${!flag.enabled})">${flag.enabled ? 'Disable' : 'Enable'}</button>
+                `;
+                flagsDiv.appendChild(flagDiv);
+            }
+        }
+
+        async function toggleFlag(name, enabled) {
+            await fetch(`/flags/${name}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ enabled: enabled })
+                });
+            getFlags();
+        }
+
+        getFlags();
+    </script>
+</body>
+</html>

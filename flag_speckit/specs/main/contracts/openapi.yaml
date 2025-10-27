@@ -1,0 +1,145 @@
+openapi: 3.0.0
+info:
+  title: Feature Flag Service API
+  version: 1.0.0
+paths:
+  /flags:
+    get:
+      summary: List all feature flags
+      responses:
+        '200':
+          description: A list of feature flags.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureFlag'
+    post:
+      summary: Create a new feature flag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagInput'
+      responses:
+        '201':
+          description: The created feature flag.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+
+  /flags/{flag_name}:
+    get:
+      summary: Get a specific feature flag
+      parameters:
+        - name: flag_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The feature flag.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+    put:
+      summary: Update a feature flag
+      parameters:
+        - name: flag_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagInput'
+      responses:
+        '200':
+          description: The updated feature flag.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+    delete:
+      summary: Delete a feature flag
+      parameters:
+        - name: flag_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The flag was deleted.
+
+  /evaluate:
+    get:
+      summary: Evaluate all flags for a workspace
+      parameters:
+        - name: workspace_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200
+        ':
+          description: A map of flag names to their evaluated state.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+
+components:
+  schemas:
+    FeatureFlag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+
+    FeatureFlagInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+
+    Rule:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [GLOBAL_TOGGLE, PERCENTAGE_ROLLOUT, ATTRIBUTE_BASED]
+        percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        attribute_name:
+          type: string
+        attribute_value:
+          type: string

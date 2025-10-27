@@ -1,0 +1,19 @@
+# Gradle
+.gradle
+build/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Environment variables
+.env*
+
+# Other
+*.class
+*.jar
+*.swp
+.DS_Store
