@@ -11,13 +11,16 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
 /**
  * 파일 다운로드 컨트롤러
  *
  * 주문 내역을 엑셀 또는 PDF 파일로 다운로드하는 API를 제공합니다.
- * - 동기 다운로드: 즉시 파일을 생성하여 브라우저로 다운로드
+ * - 동기 다운로드: 스트리밍 방식으로 파일을 생성하여 브라우저로 다운로드 (OOM 방지)
  * - 비동기 다운로드: 백그라운드에서 파일을 생성하고 이메일로 발송
+ *
+ * StreamingResponseBody를 사용하여 대용량 파일 다운로드 시 OOM 문제를 방지합니다.
  */
 @RestController
 @RequestMapping("/api/claude/download")
@@ -29,21 +32,22 @@ class FileDownloadController(
 ) {
 
     /**
-     * 동기 방식 - 엑셀 다운로드
+     * 동기 방식 - 엑셀 다운로드 (스트리밍)
      *
-     * 즉시 엑셀 파일을 생성하여 브라우저로 다운로드합니다.
+     * StreamingResponseBody를 사용하여 대용량 파일도 메모리 문제 없이 다운로드
+     * 메모리에 전체 파일을 올리지 않고 청크 단위로 스트리밍
      *
      * @param userId 사용자 ID
      * @param includePrice 가격 정보 포함 여부 (기본값: true)
-     * @return 엑셀 파일
+     * @param useLargeDataset 대용량 데이터셋 사용 여부 (기본값: false, 테스트용)
+     * @return 엑셀 파일 스트림
      */
     @GetMapping("/excel/sync")
     fun downloadExcelSync(
         @RequestParam userId: Long,
-        @RequestParam(defaultValue = "true") includePrice: Boolean
-    ): ResponseEntity<ByteArray> {
-        // 주문 데이터 조회
-        val orders = orderService.getOrdersByUserId(userId)
+        @RequestParam(defaultValue = "true") includePrice: Boolean,
+        @RequestParam(defaultValue = "false") useLargeDataset: Boolean
+    ): ResponseEntity<StreamingResponseBody> {
 
         // 컬럼 설정
         val columnConfig = if (includePrice) {
@@ -52,15 +56,33 @@ class FileDownloadController(
             ColumnConfig.withoutPriceInfo()
         }
 
-        // 엑셀 파일 생성
-        val excelData = excelGenerationService.generateOrderExcel(orders, columnConfig)
+        // StreamingResponseBody: OutputStream을 직접 제공받아 스트리밍 쓰기
+        val streamingBody = StreamingResponseBody { outputStream ->
+            if (useLargeDataset) {
+                // 대용량 데이터: Sequence로 스트리밍 조회
+                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                excelGenerationService.generateOrderExcelFromSequence(
+                    ordersSequence,
+                    columnConfig,
+                    outputStream
+                )
+            } else {
+                // 소량 데이터: List로 한번에 조회
+                val orders = orderService.getOrdersByUserId(userId)
+                excelGenerationService.generateOrderExcel(
+                    orders,
+                    columnConfig,
+                    outputStream
+                )
+            }
+        }
 
         // HTTP 응답 헤더 설정
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         headers.setContentDispositionFormData("attachment", "order_history_${userId}.xlsx")
 
-        return ResponseEntity(excelData, headers, HttpStatus.OK)
+        return ResponseEntity(streamingBody, headers, HttpStatus.OK)
     }
 
     /**
@@ -93,27 +115,46 @@ class FileDownloadController(
     }
 
     /**
-     * 동기 방식 - PDF 다운로드
+     * 동기 방식 - PDF 다운로드 (스트리밍)
      *
-     * 즉시 PDF 파일을 생성하여 브라우저로 다운로드합니다.
+     * StreamingResponseBody를 사용하여 대용량 파일도 메모리 문제 없이 다운로드
+     * 메모리에 전체 파일을 올리지 않고 청크 단위로 스트리밍
      *
      * @param userId 사용자 ID
-     * @return PDF 파일
+     * @param useLargeDataset 대용량 데이터셋 사용 여부 (기본값: false, 테스트용)
+     * @return PDF 파일 스트림
      */
     @GetMapping("/pdf/sync")
-    fun downloadPdfSync(@RequestParam userId: Long): ResponseEntity<ByteArray> {
-        // 주문 데이터 조회
-        val orders = orderService.getOrdersByUserId(userId)
+    fun downloadPdfSync(
+        @RequestParam userId: Long,
+        @RequestParam(defaultValue = "false") useLargeDataset: Boolean
+    ): ResponseEntity<StreamingResponseBody> {
 
-        // PDF 파일 생성
-        val pdfData = pdfGenerationService.generateOrderPdf(orders)
+        // StreamingResponseBody: OutputStream을 직접 제공받아 스트리밍 쓰기
+        val streamingBody = StreamingResponseBody { outputStream ->
+            if (useLargeDataset) {
+                // 대용량 데이터: Sequence로 스트리밍 조회
+                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                pdfGenerationService.generateOrderPdfFromSequence(
+                    ordersSequence,
+                    outputStream
+                )
+            } else {
+                // 소량 데이터: List로 한번에 조회
+                val orders = orderService.getOrdersByUserId(userId)
+                pdfGenerationService.generateOrderPdf(
+                    orders,
+                    outputStream
+                )
+            }
+        }
 
         // HTTP 응답 헤더 설정
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_PDF
         headers.setContentDispositionFormData("attachment", "order_history_${userId}.pdf")
 
-        return ResponseEntity(pdfData, headers, HttpStatus.OK)
+        return ResponseEntity(streamingBody, headers, HttpStatus.OK)
     }
 
     /**

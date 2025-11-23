@@ -1,7 +1,6 @@
 package com.example.filepractice.claude.service
 
 import com.example.filepractice.claude.domain.Order
-import com.itextpdf.io.font.PdfEncodings
 import com.itextpdf.kernel.colors.ColorConstants
 import com.itextpdf.kernel.font.PdfFont
 import com.itextpdf.kernel.font.PdfFontFactory
@@ -14,14 +13,17 @@ import com.itextpdf.layout.element.Table
 import com.itextpdf.layout.properties.TextAlignment
 import com.itextpdf.layout.properties.UnitValue
 import org.springframework.stereotype.Service
-import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.time.format.DateTimeFormatter
 
 /**
  * PDF 생성 서비스
  *
  * iText7 라이브러리를 사용하여 주문 내역을 PDF로 생성합니다.
- * 한글 폰트는 font-asian 패키지의 내장 폰트를 사용합니다.
+ * Sequence + OutputStream을 사용하여 대용량 데이터 처리 시 OOM 문제를 방지합니다.
+ * - Sequence: 입력 데이터를 지연 평가(lazy evaluation)로 처리
+ * - OutputStream: 출력을 직접 스트림으로 전송하여 메모리 절약
+ * - 한글 폰트는 font-asian 패키지의 내장 폰트를 사용합니다.
  */
 @Service
 class PdfGenerationService {
@@ -29,13 +31,26 @@ class PdfGenerationService {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     /**
-     * 주문 내역을 PDF 파일로 생성
+     * 주문 내역을 PDF 파일로 생성 (List 방식 - 소량 데이터용)
      *
      * @param orders 주문 목록
-     * @return PDF 파일 바이트 배열
+     * @param outputStream 출력 스트림
      */
-    fun generateOrderPdf(orders: List<Order>): ByteArray {
-        val outputStream = ByteArrayOutputStream()
+    fun generateOrderPdf(orders: List<Order>, outputStream: OutputStream) {
+        generateOrderPdfFromSequence(orders.asSequence(), outputStream)
+    }
+
+    /**
+     * 주문 내역을 PDF 파일로 생성 (Sequence 방식 - 대용량 데이터용)
+     *
+     * Sequence를 사용하여 메모리에 전체 데이터를 로드하지 않고 스트리밍 방식으로 처리
+     * iText는 내부적으로 페이지 단위로 flush하므로 메모리 효율적
+     *
+     * @param orders 주문 Sequence (지연 평가)
+     * @param outputStream 출력 스트림
+     */
+    fun generateOrderPdfFromSequence(orders: Sequence<Order>, outputStream: OutputStream) {
+        // OutputStream에 직접 쓰기 (메모리에 전체 파일을 올리지 않음)
         val writer = PdfWriter(outputStream)
         val pdfDocument = PdfDocument(writer)
         val document = Document(pdfDocument)
@@ -47,17 +62,24 @@ class PdfGenerationService {
             // 제목 추가
             addTitle(document, koreanFont)
 
-            // 주문별로 상세 정보 표시
+            // 주문별로 상세 정보 표시 (Sequence로 한 번에 하나씩 처리)
+            var processedCount = 0
             orders.forEach { order ->
                 addOrderSection(document, order, koreanFont)
                 document.add(Paragraph("\n")) // 주문 간 여백
+
+                processedCount++
+
+                // 주기적으로 flush하여 메모리 압력 감소
+                if (processedCount % 100 == 0) {
+                    document.flush()
+                }
             }
 
         } finally {
+            // 문서 닫기 (자동으로 남은 내용을 flush)
             document.close()
         }
-
-        return outputStream.toByteArray()
     }
 
     /**
