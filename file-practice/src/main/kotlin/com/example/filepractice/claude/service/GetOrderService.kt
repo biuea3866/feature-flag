@@ -15,7 +15,7 @@ import kotlin.random.Random
  * 대용량 데이터 처리를 위해 Sequence 기반 스트리밍을 지원합니다.
  */
 @Service
-class OrderService {
+class GetOrderService {
 
     companion object {
         private const val DEFAULT_PAGE_SIZE = 1000 // 기본 페이지 크기

@@ -9,7 +9,7 @@ import java.math.BigDecimal
  */
 class OrderServiceTest {
 
-    private val orderService = OrderService()
+    private val getOrderService = GetOrderService()
 
     @Test
     fun `사용자 주문 내역 조회 테스트`() {
@@ -17,7 +17,7 @@ class OrderServiceTest {
         val userId = 100L
 
         // When
-        val orders = orderService.getOrdersByUserId(userId)
+        val orders = getOrderService.getOrdersByUserId(userId)
 
         // Then
         assertNotNull(orders)
@@ -40,7 +40,7 @@ class OrderServiceTest {
         val userId = 100L
 
         // When
-        val orders = orderService.getOrdersByUserId(userId)
+        val orders = getOrderService.getOrdersByUserId(userId)
 
         // Then
         orders.forEach { order ->
@@ -62,7 +62,7 @@ class OrderServiceTest {
         val userId = 100L
 
         // When
-        val orders = orderService.getOrdersByUserId(userId)
+        val orders = getOrderService.getOrdersByUserId(userId)
 
         // Then
         val ordersWithCoupon = orders.filter { it.coupon != null }

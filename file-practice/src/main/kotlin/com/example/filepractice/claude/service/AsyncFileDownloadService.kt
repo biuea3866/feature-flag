@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream
  */
 @Service
 class AsyncFileDownloadService(
-    private val orderService: OrderService,
+    private val getOrderService: GetOrderService,
     private val excelGenerationService: ExcelGenerationService,
     private val pdfGenerationService: PdfGenerationService,
     private val emailService: EmailService
@@ -49,7 +49,7 @@ class AsyncFileDownloadService(
                 val outputStream = ByteArrayOutputStream()
 
                 // 주문 데이터를 Sequence로 스트리밍 조회하여 엑셀 생성
-                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                val ordersSequence = getOrderService.getOrdersByUserIdAsSequence(userId)
                 excelGenerationService.generateOrderExcelFromSequence(
                     ordersSequence,
                     columnConfig,
@@ -89,7 +89,7 @@ class AsyncFileDownloadService(
                 val outputStream = ByteArrayOutputStream()
 
                 // 주문 데이터를 Sequence로 스트리밍 조회하여 PDF 생성
-                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                val ordersSequence = getOrderService.getOrdersByUserIdAsSequence(userId)
                 pdfGenerationService.generateOrderPdfFromSequence(
                     ordersSequence,
                     outputStream

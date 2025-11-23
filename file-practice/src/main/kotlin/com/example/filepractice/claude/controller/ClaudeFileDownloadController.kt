@@ -4,7 +4,7 @@ import com.example.filepractice.claude.dto.ColumnConfig
 import com.example.filepractice.claude.dto.DownloadRequest
 import com.example.filepractice.claude.service.AsyncFileDownloadService
 import com.example.filepractice.claude.service.ExcelGenerationService
-import com.example.filepractice.claude.service.OrderService
+import com.example.filepractice.claude.service.GetOrderService
 import com.example.filepractice.claude.service.PdfGenerationService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -24,8 +24,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
  */
 @RestController
 @RequestMapping("/api/claude/download")
-class FileDownloadController(
-    private val orderService: OrderService,
+class ClaudeFileDownloadController(
+    private val getOrderService: GetOrderService,
     private val excelGenerationService: ExcelGenerationService,
     private val pdfGenerationService: PdfGenerationService,
     private val asyncFileDownloadService: AsyncFileDownloadService
@@ -60,7 +60,7 @@ class FileDownloadController(
         val streamingBody = StreamingResponseBody { outputStream ->
             if (useLargeDataset) {
                 // 대용량 데이터: Sequence로 스트리밍 조회
-                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                val ordersSequence = getOrderService.getOrdersByUserIdAsSequence(userId)
                 excelGenerationService.generateOrderExcelFromSequence(
                     ordersSequence,
                     columnConfig,
@@ -68,7 +68,7 @@ class FileDownloadController(
                 )
             } else {
                 // 소량 데이터: List로 한번에 조회
-                val orders = orderService.getOrdersByUserId(userId)
+                val orders = getOrderService.getOrdersByUserId(userId)
                 excelGenerationService.generateOrderExcel(
                     orders,
                     columnConfig,
@@ -134,14 +134,14 @@ class FileDownloadController(
         val streamingBody = StreamingResponseBody { outputStream ->
             if (useLargeDataset) {
                 // 대용량 데이터: Sequence로 스트리밍 조회
-                val ordersSequence = orderService.getOrdersByUserIdAsSequence(userId)
+                val ordersSequence = getOrderService.getOrdersByUserIdAsSequence(userId)
                 pdfGenerationService.generateOrderPdfFromSequence(
                     ordersSequence,
                     outputStream
                 )
             } else {
                 // 소량 데이터: List로 한번에 조회
-                val orders = orderService.getOrdersByUserId(userId)
+                val orders = getOrderService.getOrdersByUserId(userId)
                 pdfGenerationService.generateOrderPdf(
                     orders,
                     outputStream
