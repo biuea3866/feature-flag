@@ -5,5 +5,5 @@ abstract class Lock(
 ) {
     val count get() = this.viewPage.count
 
-    abstract fun lock()
+    abstract fun lock(print: Boolean)
 }

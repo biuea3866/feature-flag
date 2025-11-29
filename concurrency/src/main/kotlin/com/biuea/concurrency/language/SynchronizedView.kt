@@ -6,7 +6,7 @@ import kotlin.jvm.Synchronized
 
 class SynchronizedView: Lock() {
     @Synchronized
-    override fun lock() {
-        this.viewPage.view()
+    override fun lock(print: Boolean) {
+        this.viewPage.view(print)
     }
 }
