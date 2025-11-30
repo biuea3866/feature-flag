@@ -3,6 +3,7 @@ package com.example.filepractice.poc.presentation
 import com.example.filepractice.poc.application.DownloadableData
 import com.example.filepractice.poc.application.ExcelDownloader
 import com.example.filepractice.poc.domain.excel.WorkbookType
+import kotlinx.coroutines.runBlocking
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -21,7 +22,9 @@ class PocExcelDownloadController(
 ) {
 
     /**
-     * 비동기 방식 엑셀 다운로드
+     * 비동기 방식 엑셀 다운로드 (개선 버전)
+     * - runBlocking을 StreamingResponseBody 람다 안에서만 사용
+     * - 실제 스트리밍 중에만 블로킹되므로 요청 수신 시점에는 블로킹 없음
      */
     @GetMapping("/download/async")
     fun downloadExcelAsync(
@@ -31,7 +34,11 @@ class PocExcelDownloadController(
         val downloadableData = createDownloadableData(dataSize)
 
         val streamingResponseBody = StreamingResponseBody { outputStream ->
-            excelDownloader.write(outputStream, downloadableData, workbookType)
+            // StreamingResponseBody 내부에서만 runBlocking 사용
+            // 이 시점에는 이미 HTTP 응답이 시작되었으므로 문제없음
+            runBlocking {
+                excelDownloader.write(outputStream, downloadableData, workbookType)
+            }
         }
 
         return ResponseEntity.ok()
