@@ -6,6 +6,7 @@ import com.example.filepractice.poc.domain.excel.WorkbookType
 import kotlinx.coroutines.runBlocking
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -41,10 +42,12 @@ class PocExcelDownloadController(
             }
         }
 
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, getContentDisposition("poc_excel_async.xlsx"))
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .body(streamingResponseBody)
+        val headers = HttpHeaders()
+
+        headers.contentType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        headers.setContentDispositionFormData("attachment", "poc_excel_sync.xlsx")
+
+        return ResponseEntity(streamingResponseBody, headers, HttpStatus.OK)
     }
 
     /**
@@ -61,10 +64,12 @@ class PocExcelDownloadController(
             excelDownloader.writeSync(outputStream, downloadableData, workbookType)
         }
 
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, getContentDisposition("poc_excel_sync.xlsx"))
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .body(streamingResponseBody)
+        val headers = HttpHeaders()
+
+        headers.contentType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        headers.setContentDispositionFormData("attachment", "poc_excel_sync.xlsx")
+
+        return ResponseEntity(streamingResponseBody, headers, HttpStatus.OK)
     }
 
     private fun createDownloadableData(dataSize: Int): DownloadableData {
