@@ -57,7 +57,7 @@ class WaitingSystemService(
 
         try {
             // 1초 동안 대기, 10초 후에 자동 해제
-            lockAcquired = lock.tryLock(3, 10, TimeUnit.SECONDS)
+            lockAcquired = lock.tryLock(1, 10, TimeUnit.SECONDS)
 
             if (redisTemplate.hasKey(key)) {
                 return  // 이미 다른 스레드가 초기화함
